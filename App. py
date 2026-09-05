@@ -1,0 +1,77 @@
+from flask import Flask, request, jsonify
+
+app = Flask(__name__)
+
+
+@app.route("/")
+def home():
+    return "Welcome to HireLens"
+
+
+# Job database
+jobs = [
+    {
+        "role": "Python Developer",
+        "skills": ["Python", "SQL", "Flask"]
+    },
+    {
+        "role": "Frontend Developer",
+        "skills": ["HTML", "CSS", "JavaScript"]
+    },
+    {
+        "role": "Full Stack Developer",
+        "skills": ["HTML", "CSS", "JavaScript", "Python"]
+    },
+    {
+        "role": "Data Analyst",
+        "skills": ["Python", "SQL", "Excel"]
+    }
+]
+
+
+@app.route("/match", methods=["POST"])
+def match_jobs():
+
+    data = request.get_json()
+
+    user_skills = data.get("skills", [])
+
+    user_skills = [skill.lower() for skill in user_skills]
+
+    matched_jobs = []
+
+    for job in jobs:
+
+        job_skills = [skill.lower() for skill in job["skills"]]
+
+        matching_skills = []
+
+        for skill in job_skills:
+            if skill in user_skills:
+                matching_skills.append(skill)
+
+        if matching_skills:
+
+            match_percentage = (
+                len(matching_skills) / len(job_skills)
+            ) * 100
+
+            matched_jobs.append({
+                "job_role": job["role"],
+                "matching_skills": matching_skills,
+                "match_percentage": round(match_percentage, 2)
+            })
+
+    matched_jobs.sort(
+        key=lambda x: x["match_percentage"],
+        reverse=True
+    )
+
+    return jsonify({
+        "message": "Job matching completed",
+        "recommended_jobs": matched_jobs
+    })
+
+
+if __name__ == "__main__":
+    app.run(debug=True)
